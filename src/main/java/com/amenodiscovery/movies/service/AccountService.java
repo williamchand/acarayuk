@@ -12,14 +12,9 @@ import com.amenodiscovery.movies.repository.RoleRepository;
 import com.amenodiscovery.movies.user.Account;
 import com.amenodiscovery.movies.user.Role;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -29,8 +24,6 @@ import java.util.Set;
 
 @Service
 public class AccountService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AccountService.class);
-
     private final RoleRepository roleRepository;
     private final AccountRepository accountRepository;
     private final JWTUtils jwtUtils;
