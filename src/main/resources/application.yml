@@ -1,0 +1,5 @@
+spring:
+    application:
+        name: movies
+    profiles:
+        active: dev
