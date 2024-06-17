@@ -13,7 +13,9 @@ import com.amenodiscovery.movies.user.Account;
 import com.amenodiscovery.movies.user.Role;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.transaction.Transactional;
 import java.io.IOException;
@@ -44,7 +46,12 @@ public class AccountService {
     }
 
     public Account getAccount(Long id) {
-        return accountRepository.findById(id).orElse(null);
+        Account account = accountRepository.findById(id).orElse(null);
+        if (account == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "account not found");
+        }
+        return account;
     }
 
     public String loginOAuthGoogle(IdTokenRequestDto requestBody) {

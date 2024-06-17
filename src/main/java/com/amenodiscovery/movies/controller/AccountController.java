@@ -25,10 +25,6 @@ public class AccountController {
     @GetMapping("/user/info")
     public ResponseEntity<AccountDto> getUserInfo(Principal principal) {
         Account account = accountService.getAccount(Long.valueOf(principal.getName()));
-        if (account == null) {
-            throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "account not found");
-        }
         return ResponseEntity.ok().body(convertToDto(account));
     }
 }
