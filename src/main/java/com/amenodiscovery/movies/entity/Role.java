@@ -1,4 +1,4 @@
-package com.amenodiscovery.movies.user;
+package com.amenodiscovery.movies.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

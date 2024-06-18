@@ -1,7 +1,8 @@
 package com.amenodiscovery.movies.repository;
 
-import com.amenodiscovery.movies.user.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.amenodiscovery.movies.entity.Account;
 
 import java.util.Optional;
 

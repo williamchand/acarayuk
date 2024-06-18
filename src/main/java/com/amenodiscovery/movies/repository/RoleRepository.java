@@ -1,7 +1,8 @@
 package com.amenodiscovery.movies.repository;
 
-import com.amenodiscovery.movies.user.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.amenodiscovery.movies.entity.Role;
 
 public interface RoleRepository extends JpaRepository<Role, Long> {
 }

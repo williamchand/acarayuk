@@ -7,10 +7,10 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.amenodiscovery.movies.config.JWTUtils;
 import com.amenodiscovery.movies.dto.IdTokenRequestDto;
+import com.amenodiscovery.movies.entity.Account;
+import com.amenodiscovery.movies.entity.Role;
 import com.amenodiscovery.movies.repository.AccountRepository;
 import com.amenodiscovery.movies.repository.RoleRepository;
-import com.amenodiscovery.movies.user.Account;
-import com.amenodiscovery.movies.user.Role;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;

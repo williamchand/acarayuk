@@ -3,8 +3,8 @@ package com.amenodiscovery.movies.dto;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.amenodiscovery.movies.user.Account;
-import com.amenodiscovery.movies.user.Role;
+import com.amenodiscovery.movies.entity.Account;
+import com.amenodiscovery.movies.entity.Role;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

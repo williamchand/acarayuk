@@ -1,8 +1,5 @@
 package com.amenodiscovery.movies.config;
 
-import com.amenodiscovery.movies.user.Account;
-import com.amenodiscovery.movies.user.Role;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -15,6 +12,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.amenodiscovery.movies.entity.Account;
+import com.amenodiscovery.movies.entity.Role;
 
 import java.security.Key;
 import java.util.Date;
