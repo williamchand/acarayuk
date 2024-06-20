@@ -1,37 +1,31 @@
 package com.amenodiscovery.movies.service;
 
-import java.io.File;
-import java.io.IOException;
+import static com.amenodiscovery.movies.dto.MovieDto.convertToDto;
+
+import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.amenodiscovery.movies.config.JWTUtils;
 import com.amenodiscovery.movies.entity.Account;
 import com.amenodiscovery.movies.entity.Movie;
-import com.amenodiscovery.movies.entity.Role;
+import com.amenodiscovery.movies.entity.MovieHistory;
 import com.amenodiscovery.movies.entity.ScrapeTemplate;
-import com.amenodiscovery.movies.repository.AccountRepository;
+import com.amenodiscovery.movies.repository.MovieHistoryRepository;
 import com.amenodiscovery.movies.repository.MovieRepository;
-import com.amenodiscovery.movies.repository.RoleRepository;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
+import java.util.Optional;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.transaction.Transactional;
@@ -41,11 +35,13 @@ public class MovieService {
     private static Logger logger = LoggerFactory.getLogger(MovieService.class);
 
     private final MovieRepository movieRepository;
+    private final MovieHistoryRepository movieHistoryRepository;
     private final ScrapeTemplateService scrapeTemplateService;
 
-    public MovieService(MovieRepository movieRepository, ScrapeTemplateService scrapeTemplateService) {
+    public MovieService(MovieRepository movieRepository, ScrapeTemplateService scrapeTemplateService, MovieHistoryRepository movieHistoryRepository) {
         this.movieRepository = movieRepository;
         this.scrapeTemplateService = scrapeTemplateService;
+        this.movieHistoryRepository = movieHistoryRepository;
     }
 
     public void scrapeImdb() {
@@ -64,7 +60,7 @@ public class MovieService {
         driver.close();
     }
 
-    public void parseDataOnPage(WebDriver driver, String genre) {
+    private void parseDataOnPage(WebDriver driver, String genre) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         WebElement response = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//ul[contains(@class,'ipc-metadata-list')]")));
 
@@ -78,6 +74,43 @@ public class MovieService {
             String description = parseElement(list, ".//div[contains(@class,'ipc-html-content-inner-div')]");
             createOrUpdateMovie(new Movie(title, genre, uniqueIdentifier, pictureUrl, yearRelease, playingTime, description));
        }
+    }
+
+    public Movie getRecommendation(Account account, String genre) {
+        Date historyDate = new Date();
+        if (account != null) {
+            Optional<MovieHistory> movieHistory = movieHistoryRepository.findByAccountAndGenreAndHistoryDate(account, genre, historyDate);
+            if (movieHistory.isPresent()) {
+                return movieHistory.get().getMovie();
+            }
+        }
+        Optional<Movie> movie = getRandomMovieByGenre(genre);
+        if (!movie.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "movie not found");
+        }
+        if (account != null) {
+            MovieHistory movieHistory = new MovieHistory(account, movie.get(), historyDate, genre);
+            movieHistoryRepository.save(movieHistory);
+        }
+        return movie.get();
+    }
+
+    private Optional<Movie> getRandomMovieByGenre(String genre) {
+        Optional<Movie> movie = Optional.empty();
+        List<Movie> movieList = movieRepository.findByGenre(genre);
+        if (!movieList.isEmpty()) {
+            SecureRandom rand = new SecureRandom();
+            movie = Optional.of(movieList.get(rand.nextInt(movieList.size())));
+        }
+
+        return movie;
+    }
+
+    public List<Movie> getHistory(Account account) {
+        List<MovieHistory> movieHistories = movieHistoryRepository.findByAccount(account);
+        return movieHistories.stream()
+            .map(MovieHistory::getMovie)
+            .collect(Collectors.toList());
     }
 
     private String parseElement(WebElement elem, String xpath) {
