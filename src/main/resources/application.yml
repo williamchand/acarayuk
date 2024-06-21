@@ -1,5 +1,5 @@
 spring:
     application:
-        name: movies
+        name: authentication
     profiles:
         active: dev
