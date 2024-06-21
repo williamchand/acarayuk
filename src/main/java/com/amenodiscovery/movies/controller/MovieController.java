@@ -4,7 +4,6 @@ import com.amenodiscovery.movies.dto.GeneralDto;
 import com.amenodiscovery.movies.dto.MovieDto;
 import com.amenodiscovery.movies.entity.Account;
 import com.amenodiscovery.movies.entity.Movie;
-import com.amenodiscovery.movies.entity.Role;
 import com.amenodiscovery.movies.service.AccountService;
 import com.amenodiscovery.movies.service.MovieService;
 

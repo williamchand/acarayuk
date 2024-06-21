@@ -12,7 +12,7 @@ public class ScheduledMovieScraping {
     @Autowired
     private MovieService movieService;
 
-    // @Scheduled(cron = "0 * * * * *") // Cron expression for running every minute
+    // @Scheduled(cron = "${app.cron.expression}")
     @Scheduled(initialDelay = 1)
     public void execute() {
         movieService.scrapeImdb();

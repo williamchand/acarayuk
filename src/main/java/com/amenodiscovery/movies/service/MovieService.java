@@ -1,7 +1,5 @@
 package com.amenodiscovery.movies.service;
 
-import static com.amenodiscovery.movies.dto.MovieDto.convertToDto;
-
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Date;
