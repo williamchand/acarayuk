@@ -28,6 +28,8 @@ public interface IUserService {
 
     void createPasswordResetTokenForUser(User user, String token);
 
+    String login(String email, String password);
+
     User findUserByEmail(String email);
 
     PasswordResetToken getPasswordResetToken(String token);

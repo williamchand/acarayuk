@@ -6,27 +6,44 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
+import com.amenodiscovery.authentication.persistence.model.Privilege;
+import com.amenodiscovery.authentication.persistence.model.Role;
 import com.amenodiscovery.authentication.persistence.model.User;
 import com.amenodiscovery.authentication.persistence.model.VerificationToken;
 import com.amenodiscovery.authentication.registration.OnRegistrationCompleteEvent;
 import com.amenodiscovery.authentication.security.ISecurityUserService;
 import com.amenodiscovery.authentication.service.IUserService;
+import com.amenodiscovery.authentication.web.dto.LoginDto;
 import com.amenodiscovery.authentication.web.dto.PasswordDto;
 import com.amenodiscovery.authentication.web.dto.UserDto;
 import com.amenodiscovery.authentication.web.error.InvalidOldPasswordException;
 import com.amenodiscovery.authentication.web.util.GenericResponse;
+import com.amenodiscovery.movies.config.JWTUtils;
+import com.google.common.net.HttpHeaders;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.io.UnsupportedEncodingException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 public class RegistrationRestController {
@@ -126,10 +143,54 @@ public class RegistrationRestController {
         return null;
     }
 
+    @GetMapping("/user/registrationConfirm")
+    public GenericResponse confirmRegistration(final Locale locale, @RequestParam("token") final String token) throws UnsupportedEncodingException {
+        final String result = userService.validateVerificationToken(token);
+        if (result.equals("valid")) {
+            final User user = userService.getUser(token);
+            // if (user.isUsing2FA()) {
+            // model.addAttribute("qr", userService.generateQRUrl(user));
+            // return "redirect:/qrcode.html?lang=" + locale.getLanguage();
+            // }
+            return new GenericResponse(messages.getMessage("message.accountVerified", null, locale));
+        }
+        return new GenericResponse(messages.getMessage("auth.message.invalid", null, locale));
+    }
+
+    @GetMapping("/user/login")
+    public ResponseEntity<String> login(@Valid LoginDto loginDto, HttpServletResponse response) {
+        String authToken = userService.login(loginDto.getEmail(), loginDto.getEmail());
+        final ResponseCookie cookie = ResponseCookie.from("AUTH-TOKEN", authToken)
+                .httpOnly(true)
+                .maxAge(7 * 24 * (long)3600)
+                .path("/")
+                .secure(false)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok().build();
+    }
+    
+
     // ============== NON-API ============
 
+    public void authWithoutPassword(User user) {
+        List<Privilege> privileges = user.getRoles()
+                .stream()
+                .map(Role::getPrivileges)
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<GrantedAuthority> authorities = privileges.stream()
+                .map(p -> new SimpleGrantedAuthority(p.getName()))
+                .collect(Collectors.toList());
+
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user, null, authorities);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+    }
+
     private SimpleMailMessage constructResendVerificationTokenEmail(final String contextPath, final Locale locale, final VerificationToken newToken, final User user) {
-        final String confirmationUrl = contextPath + "/registrationConfirm.html?token=" + newToken.getToken();
+        final String confirmationUrl = contextPath + "/user/registrationConfirm.html?token=" + newToken.getToken();
         final String message = messages.getMessage("message.resendToken", null, locale);
         return constructEmail("Resend Registration Token", message + " \r\n" + confirmationUrl, user);
     }

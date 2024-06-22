@@ -33,7 +33,9 @@ import com.amenodiscovery.authentication.persistence.model.PasswordResetToken;
 import com.amenodiscovery.authentication.persistence.model.User;
 import com.amenodiscovery.authentication.persistence.model.UserLocation;
 import com.amenodiscovery.authentication.persistence.model.VerificationToken;
+import com.amenodiscovery.authentication.spring.JWTUtils;
 import com.amenodiscovery.authentication.web.dto.UserDto;
+import com.amenodiscovery.authentication.web.error.InvalidOldPasswordException;
 import com.amenodiscovery.authentication.web.error.UserAlreadyExistException;
 import com.maxmind.geoip2.DatabaseReader;
 
@@ -69,6 +71,9 @@ public class UserService implements IUserService {
     @Autowired
     private NewLocationTokenRepository newLocationTokenRepository;
 
+    @Autowired
+    private JWTUtils jwtUtils;
+ 
     @Autowired
     private Environment env;
 
@@ -178,6 +183,15 @@ public class UserService implements IUserService {
     public void changeUserPassword(final User user, final String password) {
         user.setPassword(passwordEncoder.encode(password));
         userRepository.save(user);
+    }
+
+    @Override
+    public String login(final String email, final String password) {
+        final User user = findUserByEmail(email);
+        if (!checkIfValidOldPassword(user, password)) {
+            throw new InvalidOldPasswordException();
+        }
+        return jwtUtils.createToken(user, false);
     }
 
     @Override

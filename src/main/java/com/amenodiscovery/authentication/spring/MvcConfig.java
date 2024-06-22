@@ -14,6 +14,7 @@ import org.springframework.validation.Validator;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.web.context.request.RequestContextListener;
 import org.springframework.web.servlet.LocaleResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.DefaultServletHandlerConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -37,29 +38,6 @@ public class MvcConfig implements WebMvcConfigurer {
 
     @Autowired
     private MessageSource messageSource;
-
-    @Override
-    public void addViewControllers(final ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/login");
-        registry.addViewController("/loginRememberMe");
-        registry.addViewController("/customLogin");
-        registry.addViewController("/registration.html");
-        registry.addViewController("/registrationCaptcha.html");
-        registry.addViewController("/registrationReCaptchaV3.html");
-        registry.addViewController("/logout.html");
-        registry.addViewController("/homepage.html");
-        registry.addViewController("/expiredAccount.html");
-        registry.addViewController("/emailError.html");
-        registry.addViewController("/home.html");
-        registry.addViewController("/invalidSession.html");
-        registry.addViewController("/admin.html");
-        registry.addViewController("/successRegister.html");
-        registry.addViewController("/forgetPassword.html");
-        registry.addViewController("/updatePassword.html");
-        registry.addViewController("/changePassword.html");
-        registry.addViewController("/users.html");
-        registry.addViewController("/qrcode.html");
-    }
 
     @Override
     public void configureDefaultServletHandling(final DefaultServletHandlerConfigurer configurer) {
@@ -113,5 +91,14 @@ public class MvcConfig implements WebMvcConfigurer {
     @Bean
     WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> enableDefaultServlet() {
         return (factory) -> factory.setRegisterDefaultServlet(true);
+    }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:3000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true);
     }
 }

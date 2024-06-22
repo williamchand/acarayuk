@@ -1,9 +1,6 @@
 package com.amenodiscovery.authentication.spring;
 
-import com.amenodiscovery.authentication.persistence.dao.UserRepository;
-import com.amenodiscovery.authentication.security.CustomRememberMeServices;
 import com.amenodiscovery.authentication.security.google2fa.CustomAuthenticationProvider;
-import com.amenodiscovery.authentication.security.google2fa.CustomWebAuthenticationDetailsSource;
 import com.amenodiscovery.authentication.security.location.DifferentLocationChecker;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
@@ -11,17 +8,19 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.expression.SecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CorsConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -30,11 +29,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.FilterInvocation;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.expression.DefaultWebSecurityExpressionHandler;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.authentication.RememberMeServices;
-import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
-import org.springframework.security.web.authentication.rememberme.InMemoryTokenRepositoryImpl;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
@@ -42,27 +38,16 @@ import java.io.File;
 import java.io.IOException;
 
 // @ImportResource({ "classpath:webSecurityConfig.xml" })
-@EnableWebSecurity
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecSecurityConfig {
 
     @Autowired
     private UserDetailsService userDetailsService;
 
     @Autowired
-    private AuthenticationSuccessHandler myAuthenticationSuccessHandler;
-
-    @Autowired
-    private LogoutSuccessHandler myLogoutSuccessHandler;
-
-    @Autowired
-    private AuthenticationFailureHandler authenticationFailureHandler;
-
-    @Autowired
-    private CustomWebAuthenticationDetailsSource authenticationDetailsSource;
-
-    @Autowired
-    private UserRepository userRepository;
+    private JWTRequestFilter jwtRequestFilter;
 
     @Bean
     public AuthenticationManager authManager(HttpSecurity http) throws Exception {
@@ -79,41 +64,37 @@ public class SecSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
-            .securityContext((securityContext) -> securityContext.requireExplicitSave(true))
-            .authorizeHttpRequests(authz -> {
-                authz.requestMatchers(HttpMethod.GET, "/roleHierarchy")
-                    .hasRole("STAFF")
-                    .requestMatchers("/login*", "/logout*", "/signin/**", "/signup/**", "/customLogin", "/user/registration*", "/registrationConfirm*", "/expiredAccount*", "/registration*", "/badUser*", "/user/resendRegistrationToken*", "/forgetPassword*",
-                        "/user/resetPassword*", "/user/savePassword*", "/updatePassword*", "/user/changePassword*", "/emailError*", "/resources/**", "/old/user/registration*", "/successRegister*", "/qrcode*", "/user/enableNewLoc*")
-                    .permitAll()
-                    .requestMatchers("/invalidSession*")
-                    .anonymous()
-                    .requestMatchers("/user/updatePassword*")
-                    .hasAuthority("CHANGE_PASSWORD_PRIVILEGE")
-                    .requestMatchers("/console")
-                    .hasAuthority("READ_PRIVILEGE")
-                    .anyRequest()
-                    .hasAuthority("READ_PRIVILEGE");
-            })
-            .formLogin((formLogin) -> formLogin.loginPage("/login")
-                .defaultSuccessUrl("/homepage.html")
-                .failureUrl("/login?error=true")
-                .successHandler(myAuthenticationSuccessHandler)
-                .failureHandler(authenticationFailureHandler)
-                .authenticationDetailsSource(authenticationDetailsSource)
-                .permitAll())
-            .sessionManagement((sessionManagement) -> sessionManagement.invalidSessionUrl("/invalidSession.html")
-                .maximumSessions(1)
-                .sessionRegistry(sessionRegistry()))
-            .logout((logout) -> logout.logoutSuccessHandler(myLogoutSuccessHandler)
-                .invalidateHttpSession(true)
-                .logoutSuccessUrl("/logout.html?logSucc=true")
-                .deleteCookies("JSESSIONID")
-                .permitAll())
-            .rememberMe((remember) -> remember.rememberMeServices(rememberMeServices()));
-
-        return http.build();
+        
+        Customizer<CorsConfigurer<HttpSecurity>> corsCustomizer = Customizer.withDefaults();
+        return http
+            .cors(corsCustomizer)
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers("/v1/oauth/login"))
+            .sessionManagement(sessionManagement -> sessionManagement
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
+            .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
+                .requestMatchers("/v1/oauth/login").permitAll()
+                .requestMatchers(
+                "user/registrationCaptcha",
+                "/user/registrationCaptchaV3", 
+                "/resources/**", 
+                "/qrcode*",
+                "/user/registration",
+                "/user/resendRegistrationToken",
+                "/user/resetPassword",
+                "/user/savePassword",
+                "/user/updatePassword",
+                "/user/update/2fa",
+                "/user/registrationConfirm",
+                "/user/login"
+                )
+                .permitAll()
+                .requestMatchers("/v1/public/**").permitAll()
+                .requestMatchers("/user/updatePassword*").authenticated()
+                .anyRequest().authenticated()) 
+            .build();
     }
 
     // beans
@@ -141,12 +122,6 @@ public class SecSecurityConfig {
     @Bean
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
-    }
-
-    @Bean
-    public RememberMeServices rememberMeServices() {
-        CustomRememberMeServices rememberMeServices = new CustomRememberMeServices("theKey", userDetailsService, new InMemoryTokenRepositoryImpl());
-        return rememberMeServices;
     }
 
     @Bean(name = "GeoIPCountry")
