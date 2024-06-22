@@ -6,7 +6,10 @@ import org.springframework.context.ApplicationEvent;
 
 import com.amenodiscovery.authentication.persistence.model.NewLocationToken;
 
+import lombok.Getter;
+
 @SuppressWarnings("serial")
+@Getter
 public class OnDifferentLocationLoginEvent extends ApplicationEvent {
 
     private final Locale locale;
@@ -25,26 +28,4 @@ public class OnDifferentLocationLoginEvent extends ApplicationEvent {
         this.token = token;
         this.appUrl = appUrl;
     }
-
-    //
-    public Locale getLocale() {
-        return locale;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public NewLocationToken getToken() {
-        return token;
-    }
-
-    public String getAppUrl() {
-        return appUrl;
-    }
-
 }

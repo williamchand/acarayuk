@@ -9,7 +9,7 @@ group = 'com.amenodiscovery'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	sourceCompatibility = '22'
+	sourceCompatibility = '21'
 }
 
 configurations {
@@ -45,7 +45,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 	implementation 'org.passay:passay:1.0'
-	implementation 'com.github.ua-parser:uap-java:1.4.0'
+	implementation 'com.github.ua-parser:uap-java:1.6.1'
 	implementation 'com.maxmind.geoip2:geoip2:2.15.0'
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
@@ -57,6 +57,9 @@ dependencies {
 	implementation 'io.github.bonigarcia:webdrivermanager:5.8.0'
 	implementation 'com.google.guava:guava:33.2.1-jre'
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.5'
+	implementation 'net.logstash.logback:logstash-logback-encoder:4.8'
+	implementation 'org.springframework.boot:spring-boot-configuration-processor'
+	implementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
 	runtimeOnly 'org.postgresql:postgresql'
@@ -64,13 +67,10 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.5'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'io.rest-assured:rest-assured'
-	testImplementation 'net.logstash.logback:logstash-logback-encoder:4.8'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework:spring-webflux'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 	testImplementation 'org.springframework.security:spring-security-test'
-	testImplementation 'org.springframework.boot:spring-boot-configuration-processor'
-	testImplementation 'nz.net.ultraq.thymeleaf:thymeleaf-layout-dialect'
 	testImplementation 'org.junit.platform:junit-platform-runner'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

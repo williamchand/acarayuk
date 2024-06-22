@@ -6,7 +6,10 @@ import org.springframework.context.ApplicationEvent;
 
 import com.amenodiscovery.authentication.persistence.model.User;
 
+import lombok.Getter;
+
 @SuppressWarnings("serial")
+@Getter
 public class OnRegistrationCompleteEvent extends ApplicationEvent {
 
     private final String appUrl;
@@ -18,20 +21,6 @@ public class OnRegistrationCompleteEvent extends ApplicationEvent {
         this.user = user;
         this.locale = locale;
         this.appUrl = appUrl;
-    }
-
-    //
-
-    public String getAppUrl() {
-        return appUrl;
-    }
-
-    public Locale getLocale() {
-        return locale;
-    }
-
-    public User getUser() {
-        return user;
     }
 
 }

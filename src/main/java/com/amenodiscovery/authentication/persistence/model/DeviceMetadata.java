@@ -1,10 +1,15 @@
 package com.amenodiscovery.authentication.persistence.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Date;
 import java.util.Objects;
 
 @Entity
+@Setter
+@Getter
 public class DeviceMetadata {
 
     @Id
@@ -14,46 +19,6 @@ public class DeviceMetadata {
     private String deviceDetails;
     private String location;
     private Date lastLoggedIn;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getDeviceDetails() {
-        return deviceDetails;
-    }
-
-    public void setDeviceDetails(String deviceDetails) {
-        this.deviceDetails = deviceDetails;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public Date getLastLoggedIn() {
-        return lastLoggedIn;
-    }
-
-    public void setLastLoggedIn(Date lastLoggedIn) {
-        this.lastLoggedIn = lastLoggedIn;
-    }
 
     @Override
     public boolean equals(Object o) {
