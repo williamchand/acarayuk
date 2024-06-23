@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.env.Environment;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsChecker;
 import org.springframework.stereotype.Component;
@@ -24,12 +25,15 @@ public class DifferentLocationChecker implements UserDetailsChecker {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
-    @Override
+    @Autowired
+    private Environment env;
+ 
+   @Override
     public void check(UserDetails userDetails) {
         final String ip = getClientIP();
         final NewLocationToken token = userService.isNewLoginLocation(userDetails.getUsername(), ip);
         if (token != null) {
-            final String appUrl = "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+            final String appUrl = env.getProperty("app.frontend.url");
             eventPublisher.publishEvent(new OnDifferentLocationLoginEvent(request.getLocale(), userDetails.getUsername(), ip, token, appUrl));
             throw new UnusualLocationException("unusual location");
         }

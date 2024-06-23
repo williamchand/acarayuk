@@ -3,6 +3,7 @@ package com.amenodiscovery.authentication.web.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.web.exchanges.HttpExchange.Principal;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.core.env.Environment;
@@ -15,9 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.amenodiscovery.authentication.persistence.model.Privilege;
 import com.amenodiscovery.authentication.persistence.model.Role;
@@ -26,12 +25,14 @@ import com.amenodiscovery.authentication.persistence.model.VerificationToken;
 import com.amenodiscovery.authentication.registration.OnRegistrationCompleteEvent;
 import com.amenodiscovery.authentication.security.ISecurityUserService;
 import com.amenodiscovery.authentication.service.IUserService;
+import com.amenodiscovery.authentication.web.dto.AccountDto;
+import com.amenodiscovery.authentication.web.dto.GeneralDto;
 import com.amenodiscovery.authentication.web.dto.LoginDto;
 import com.amenodiscovery.authentication.web.dto.PasswordDto;
 import com.amenodiscovery.authentication.web.dto.UserDto;
 import com.amenodiscovery.authentication.web.error.InvalidOldPasswordException;
 import com.amenodiscovery.authentication.web.util.GenericResponse;
-import com.amenodiscovery.movies.config.JWTUtils;
+import com.amenodiscovery.authentication.web.dto.IdTokenRequestDto;
 import com.google.common.net.HttpHeaders;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -171,6 +172,33 @@ public class RegistrationRestController {
     }
 
 
+    @GetMapping("/v1/user/enable-new-location")
+    public GenericResponse enableNewLoc(Locale locale, @RequestParam("token") String token) {
+        final String loc = userService.isValidNewLocationToken(token);
+        if (loc == null) {
+            return new GenericResponse(messages.getMessage("message.error", null, locale));
+        } 
+        return new GenericResponse(messages.getMessage("message.newLoc.enabled", new Object[] { loc }, locale));
+    }
+
+    @GetMapping("/v1/user/info")
+    public ResponseEntity<GeneralDto<AccountDto>> getUserInfo(Principal principal) {
+        final User user = userService.findUserByEmail(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getEmail());
+        return ResponseEntity.ok().body(GeneralDto.convertToDto(AccountDto.convertToDto(user)));
+    }
+
+    @PostMapping("/v1/user/login/google")
+    public ResponseEntity<String> loginWithGoogleOauth2(@RequestBody IdTokenRequestDto requestBody, HttpServletResponse response) {
+        String authToken = userService.loginOAuthGoogle(requestBody);
+        final ResponseCookie cookie = ResponseCookie.from("AUTH-TOKEN", authToken)
+                .httpOnly(true)
+                .maxAge(7 * 24 * (long)3600)
+                .path("/")
+                .secure(false)
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok().build();
+    }
     // ============== NON-API ============
 
     public void authWithoutPassword(User user) {

@@ -49,12 +49,12 @@ public class SecSecurityConfig {
     @Autowired
     private JWTRequestFilter jwtRequestFilter;
 
-    @Bean
-    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-            .authenticationProvider(authProvider())
-            .build();
-    }
+    // @Bean
+    // public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+    //     return http.getSharedObject(AuthenticationManagerBuilder.class)
+    //         .authenticationProvider(authProvider())
+    //         .build();
+    // }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -72,7 +72,11 @@ public class SecSecurityConfig {
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                 .ignoringRequestMatchers("/v1/oauth/login"))
             .sessionManagement(sessionManagement -> sessionManagement
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                // .maximumSessions(0)
+                // .sessionRegistry(sessionRegistry())
+            )
+            .authenticationProvider(authProvider())
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                 .requestMatchers("/v1/oauth/login").permitAll()
@@ -81,14 +85,15 @@ public class SecSecurityConfig {
                 "/v1/user/registration/captchav3", 
                 "/resources/**", 
                 "/qrcode*",
+                "/v1/user/info",
                 "/v1/user/registration",
                 "/v1/user/registration-token/resend",
                 "/v1/user/password/reset",
                 "/v1/user/password/save",
-                "/v1/user/password/update",
                 "/v1/user/2fa/update",
                 "/v1/user/registration-confirm",
-                "/v1/user/login"
+                "/v1/user/login",
+                "/v1/user/enable-new-location"
                 )
                 .permitAll()
                 .requestMatchers("/v1/public/**").permitAll()
