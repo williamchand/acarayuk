@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,12 +35,15 @@ public class RegistrationCaptchaController {
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
+    @Autowired
+    private Environment env;
+ 
     public RegistrationCaptchaController() {
         super();
     }
 
     // Registration
-    @PostMapping("/user/registrationCaptcha")
+    @PostMapping("/v1/user/registration/captcha")
     public GenericResponse captchaRegisterUserAccount(@Valid final UserDto accountDto, final HttpServletRequest request) {
 
         final String response = request.getParameter("g-recaptcha-response");
@@ -50,7 +54,7 @@ public class RegistrationCaptchaController {
 
     
     // Registration reCaptchaV3
-    @PostMapping("/user/registrationCaptchaV3")
+    @PostMapping("/v1/user/registration/captchav3")
     public GenericResponse captchaV3RegisterUserAccount(@Valid final UserDto accountDto, final HttpServletRequest request) {
 
         final String response = request.getParameter("response");
@@ -63,13 +67,13 @@ public class RegistrationCaptchaController {
         LOGGER.debug("Registering user account with information: {}", accountDto);
 
         final User registered = userService.registerNewUserAccount(accountDto);
-        eventPublisher.publishEvent(new OnRegistrationCompleteEvent(registered, request.getLocale(), getAppUrl(request)));
+        eventPublisher.publishEvent(new OnRegistrationCompleteEvent(registered, request.getLocale(), getAppUrl()));
         return new GenericResponse("success");
     }
     
 
-    private String getAppUrl(HttpServletRequest request) {
-        return "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+    private String getAppUrl() {
+        return env.getProperty("app.frontend.url");
     }
 
 }

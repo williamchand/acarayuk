@@ -72,39 +72,39 @@ public class RegistrationRestController {
     }
 
     // Registration
-    @PostMapping("/user/registration")
+    @PostMapping("/v1/user/registration")
     public GenericResponse registerUserAccount(@Valid final UserDto accountDto, final HttpServletRequest request) {
         LOGGER.debug("Registering user account with information: {}", accountDto);
 
         final User registered = userService.registerNewUserAccount(accountDto);
         userService.addUserLocation(registered, getClientIP(request));
-        eventPublisher.publishEvent(new OnRegistrationCompleteEvent(registered, request.getLocale(), getAppUrl(request)));
+        eventPublisher.publishEvent(new OnRegistrationCompleteEvent(registered, request.getLocale(), getAppUrl()));
         return new GenericResponse("success");
     }
 
     // User activation - verification
-    @GetMapping("/user/resendRegistrationToken")
+    @GetMapping("/v1/user/registration-token/resend")
     public GenericResponse resendRegistrationToken(final HttpServletRequest request, @RequestParam("token") final String existingToken) {
         final VerificationToken newToken = userService.generateNewVerificationToken(existingToken);
         final User user = userService.getUser(newToken.getToken());
-        mailSender.send(constructResendVerificationTokenEmail(getAppUrl(request), request.getLocale(), newToken, user));
+        mailSender.send(constructResendVerificationTokenEmail(getAppUrl(), request.getLocale(), newToken, user));
         return new GenericResponse(messages.getMessage("message.resendToken", null, request.getLocale()));
     }
 
     // Reset password
-    @PostMapping("/user/resetPassword")
+    @PostMapping("/v1/user/password/reset")
     public GenericResponse resetPassword(final HttpServletRequest request, @RequestParam("email") final String userEmail) {
         final User user = userService.findUserByEmail(userEmail);
         if (user != null) {
             final String token = UUID.randomUUID().toString();
             userService.createPasswordResetTokenForUser(user, token);
-            mailSender.send(constructResetTokenEmail(getAppUrl(request), request.getLocale(), token, user));
+            mailSender.send(constructResetTokenEmail(getAppUrl(), request.getLocale(), token, user));
         }
         return new GenericResponse(messages.getMessage("message.resetPasswordEmail", null, request.getLocale()));
     }
 
     // Save password
-    @PostMapping("/user/savePassword")
+    @PostMapping("/v1/user/password/save")
     public GenericResponse savePassword(final Locale locale, @Valid PasswordDto passwordDto) {
 
         final String result = securityUserService.validatePasswordResetToken(passwordDto.getToken());
@@ -123,7 +123,7 @@ public class RegistrationRestController {
     }
 
     // Change user password
-    @PostMapping("/user/updatePassword")
+    @PostMapping("/v1/user/password/update")
     public GenericResponse changeUserPassword(final Locale locale, @Valid PasswordDto passwordDto) {
         final User user = userService.findUserByEmail(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getEmail());
         if (!userService.checkIfValidOldPassword(user, passwordDto.getOldPassword())) {
@@ -134,7 +134,7 @@ public class RegistrationRestController {
     }
 
     // Change user 2 factor authentication
-    @PostMapping("/user/update/2fa")
+    @PostMapping("/v1/user/2fa/update")
     public GenericResponse modifyUser2FA(@RequestParam("use2FA") final boolean use2FA) throws UnsupportedEncodingException {
         final User user = userService.updateUser2FA(use2FA);
         if (use2FA) {
@@ -143,7 +143,7 @@ public class RegistrationRestController {
         return null;
     }
 
-    @GetMapping("/user/registrationConfirm")
+    @GetMapping("/v1/user/registration/confirm")
     public GenericResponse confirmRegistration(final Locale locale, @RequestParam("token") final String token) throws UnsupportedEncodingException {
         final String result = userService.validateVerificationToken(token);
         if (result.equals("valid")) {
@@ -157,9 +157,9 @@ public class RegistrationRestController {
         return new GenericResponse(messages.getMessage("auth.message.invalid", null, locale));
     }
 
-    @GetMapping("/user/login")
-    public ResponseEntity<String> login(@Valid LoginDto loginDto, HttpServletResponse response) {
-        String authToken = userService.login(loginDto.getEmail(), loginDto.getEmail());
+    @GetMapping("/v1/user/login")
+    public ResponseEntity<String> login(@Valid LoginDto loginDto, HttpServletResponse response, HttpServletRequest request) {
+        String authToken = userService.login(loginDto.getEmail(), loginDto.getPassword(), request);
         final ResponseCookie cookie = ResponseCookie.from("AUTH-TOKEN", authToken)
                 .httpOnly(true)
                 .maxAge(7 * 24 * (long)3600)
@@ -169,7 +169,7 @@ public class RegistrationRestController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok().build();
     }
-    
+
 
     // ============== NON-API ============
 
@@ -190,13 +190,13 @@ public class RegistrationRestController {
     }
 
     private SimpleMailMessage constructResendVerificationTokenEmail(final String contextPath, final Locale locale, final VerificationToken newToken, final User user) {
-        final String confirmationUrl = contextPath + "/user/registrationConfirm.html?token=" + newToken.getToken();
+        final String confirmationUrl = contextPath + "/user/registration-confirm?token=" + newToken.getToken();
         final String message = messages.getMessage("message.resendToken", null, locale);
         return constructEmail("Resend Registration Token", message + " \r\n" + confirmationUrl, user);
     }
 
     private SimpleMailMessage constructResetTokenEmail(final String contextPath, final Locale locale, final String token, final User user) {
-        final String url = contextPath + "/user/changePassword?token=" + token;
+        final String url = contextPath + "/user/change-password?token=" + token;
         final String message = messages.getMessage("message.resetPassword", null, locale);
         return constructEmail("Reset Password", message + " \r\n" + url, user);
     }
@@ -210,8 +210,8 @@ public class RegistrationRestController {
         return email;
     }
 
-    private String getAppUrl(HttpServletRequest request) {
-        return "http://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
+    private String getAppUrl() {
+        return env.getProperty("app.frontend.url");
     }
 
     private String getClientIP(HttpServletRequest request) {

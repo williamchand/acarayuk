@@ -1,26 +1,34 @@
 package com.amenodiscovery.authentication.service;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.amenodiscovery.authentication.persistence.dao.NewLocationTokenRepository;
 import com.amenodiscovery.authentication.persistence.dao.PasswordResetTokenRepository;
@@ -30,13 +38,20 @@ import com.amenodiscovery.authentication.persistence.dao.UserRepository;
 import com.amenodiscovery.authentication.persistence.dao.VerificationTokenRepository;
 import com.amenodiscovery.authentication.persistence.model.NewLocationToken;
 import com.amenodiscovery.authentication.persistence.model.PasswordResetToken;
+import com.amenodiscovery.authentication.persistence.model.Role;
 import com.amenodiscovery.authentication.persistence.model.User;
 import com.amenodiscovery.authentication.persistence.model.UserLocation;
 import com.amenodiscovery.authentication.persistence.model.VerificationToken;
 import com.amenodiscovery.authentication.spring.JWTUtils;
+import com.amenodiscovery.authentication.web.dto.IdTokenRequestDto;
 import com.amenodiscovery.authentication.web.dto.UserDto;
 import com.amenodiscovery.authentication.web.error.InvalidOldPasswordException;
 import com.amenodiscovery.authentication.web.error.UserAlreadyExistException;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.maxmind.geoip2.DatabaseReader;
 
 @Service
@@ -75,7 +90,12 @@ public class UserService implements IUserService {
     private JWTUtils jwtUtils;
  
     @Autowired
+    private DeviceService deviceService;
+
+    @Autowired
     private Environment env;
+
+    private final GoogleIdTokenVerifier verifier;
 
     public static final String TOKEN_INVALID = "invalidToken";
     public static final String TOKEN_EXPIRED = "expired";
@@ -84,7 +104,15 @@ public class UserService implements IUserService {
     public static String QR_PREFIX = "https://chart.googleapis.com/chart?chs=200x200&chld=M%%7C0&cht=qr&chl=";
     public static String APP_NAME = "SpringRegistration";
 
-    // API
+
+    public UserService(@Value("${app.googleClientId}") String clientId) {
+        super();
+        NetHttpTransport transport = new NetHttpTransport();
+        JsonFactory jsonFactory = new GsonFactory();
+        verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
+                .setAudience(Collections.singletonList(clientId))
+                .build();
+    }
 
     @Override
     public User registerNewUserAccount(final UserDto accountDto) {
@@ -97,7 +125,7 @@ public class UserService implements IUserService {
         user.setLastName(accountDto.getLastName());
         user.setPassword(passwordEncoder.encode(accountDto.getPassword()));
         user.setEmail(accountDto.getEmail());
-        user.setUsing2FA(accountDto.isUsing2FA());
+        user.setUsing2FA(false);
         user.setRoles(Collections.singletonList(roleRepository.findByName("ROLE_USER")));
         return userRepository.save(user);
     }
@@ -186,11 +214,22 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public String login(final String email, final String password) {
+    public String loginOAuthGoogle(final IdTokenRequestDto requestBody) {
+        User account = verifyIDToken(requestBody.getIdToken());
+        if (account == null) {
+            throw new IllegalArgumentException();
+        }
+        account = createOrUpdateUser(account);
+        return jwtUtils.createToken(account, false);
+    }
+
+    @Override
+    public String login(final String email, final String password, final HttpServletRequest request) {
         final User user = findUserByEmail(email);
         if (!checkIfValidOldPassword(user, password)) {
             throw new InvalidOldPasswordException();
         }
+        loginNotification(user, request);
         return jwtUtils.createToken(user, false);
     }
 
@@ -298,7 +337,6 @@ public class UserService implements IUserService {
 
     @Override
     public void addUserLocation(User user, String ip) {
-
         if(!isGeoIpLibEnabled()) {
             return;
         }
@@ -327,5 +365,63 @@ public class UserService implements IUserService {
         final NewLocationToken token = new NewLocationToken(UUID.randomUUID()
             .toString(), loc);
         return newLocationTokenRepository.save(token);
+    }
+
+    public User getAccount(Long id) {
+        User account = userRepository.findById(id).orElse(null);
+        if (account == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "account not found");
+        }
+        return account;
+    }
+
+    @Transactional
+    private User createOrUpdateUser(User account) {
+        User existingAccount = userRepository.findByEmail(account.getEmail());
+        if (existingAccount == null) {
+            account.setPassword(passwordEncoder.encode(""));
+            account.setUsing2FA(false);
+            account.setRoles(Collections.singletonList(roleRepository.findByName("ROLE_USER")));
+            return account;
+        }
+        existingAccount.setFirstName(account.getFirstName());
+        existingAccount.setLastName(account.getLastName());
+        existingAccount.setPictureUrl(account.getPictureUrl());
+        userRepository.save(existingAccount);
+        return existingAccount;
+    }
+
+    private User verifyIDToken(String idToken) {
+        try {
+            GoogleIdToken idTokenObj = verifier.verify(idToken);
+            if (idTokenObj == null) {
+                return null;
+            }
+            GoogleIdToken.Payload payload = idTokenObj.getPayload();
+            String firstName = (String) payload.get("given_name");
+            String lastName = (String) payload.get("family_name");
+            String email = payload.getEmail();
+            String pictureUrl = (String) payload.get("picture");
+
+            final User user = new User();
+            user.setFirstName(firstName);
+            user.setLastName(lastName);
+            user.setEmail(email);
+            user.setPictureUrl(pictureUrl);
+            return user;
+        } catch (GeneralSecurityException | IOException e) {
+            return null;
+        }
+    }
+
+    private void loginNotification(User user, HttpServletRequest request) {
+        try {
+            if (isGeoIpLibEnabled()) {
+                deviceService.verifyDevice(user, request);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

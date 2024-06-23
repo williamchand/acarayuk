@@ -8,7 +8,10 @@ import com.amenodiscovery.authentication.persistence.model.NewLocationToken;
 import com.amenodiscovery.authentication.persistence.model.PasswordResetToken;
 import com.amenodiscovery.authentication.persistence.model.User;
 import com.amenodiscovery.authentication.persistence.model.VerificationToken;
+import com.amenodiscovery.authentication.web.dto.IdTokenRequestDto;
 import com.amenodiscovery.authentication.web.dto.UserDto;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 public interface IUserService {
 
@@ -28,7 +31,9 @@ public interface IUserService {
 
     void createPasswordResetTokenForUser(User user, String token);
 
-    String login(String email, String password);
+    String login(String email, String password, HttpServletRequest request);
+
+    String loginOAuthGoogle(final IdTokenRequestDto requestBody);
 
     User findUserByEmail(String email);
 

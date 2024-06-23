@@ -43,6 +43,8 @@ public class User {
 
     private String secret;
 
+    private String pictureUrl;
+
     //
 
     @ManyToMany(fetch = FetchType.EAGER)

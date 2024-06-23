@@ -24,9 +24,9 @@ public class DifferentLocationLoginListener implements ApplicationListener<OnDif
 
     @Override
     public void onApplicationEvent(final OnDifferentLocationLoginEvent event) {
-        final String enableLocUri = event.getAppUrl() + "/user/enableNewLoc?token=" + event.getToken()
+        final String enableLocUri = event.getAppUrl() + "/user/enable-new-location?token=" + event.getToken()
             .getToken();
-        final String changePassUri = event.getAppUrl() + "/changePassword.html";
+        final String changePassUri = event.getAppUrl() + "/user/change-password";
         final String recipientAddress = event.getUsername();
         final String subject = "Login attempt from different location";
         final String message = messages.getMessage("message.differentLocation", new Object[] { new Date().toString(), event.getToken()

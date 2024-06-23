@@ -77,22 +77,22 @@ public class SecSecurityConfig {
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                 .requestMatchers("/v1/oauth/login").permitAll()
                 .requestMatchers(
-                "user/registrationCaptcha",
-                "/user/registrationCaptchaV3", 
+                "/v1/user/registration/captcha",
+                "/v1/user/registration/captchav3", 
                 "/resources/**", 
                 "/qrcode*",
-                "/user/registration",
-                "/user/resendRegistrationToken",
-                "/user/resetPassword",
-                "/user/savePassword",
-                "/user/updatePassword",
-                "/user/update/2fa",
-                "/user/registrationConfirm",
-                "/user/login"
+                "/v1/user/registration",
+                "/v1/user/registration-token/resend",
+                "/v1/user/password/reset",
+                "/v1/user/password/save",
+                "/v1/user/password/update",
+                "/v1/user/2fa/update",
+                "/v1/user/registration-confirm",
+                "/v1/user/login"
                 )
                 .permitAll()
                 .requestMatchers("/v1/public/**").permitAll()
-                .requestMatchers("/user/updatePassword*").authenticated()
+                .requestMatchers("/v1/user/password/update").authenticated()
                 .anyRequest().authenticated()) 
             .build();
     }
