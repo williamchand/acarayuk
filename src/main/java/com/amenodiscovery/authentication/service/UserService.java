@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.amenodiscovery.authentication.captcha.AbstractCaptchaService;
 import com.amenodiscovery.authentication.persistence.dao.NewLocationTokenRepository;
 import com.amenodiscovery.authentication.persistence.dao.PasswordResetTokenRepository;
 import com.amenodiscovery.authentication.persistence.dao.RoleRepository;
@@ -57,6 +60,8 @@ import com.maxmind.geoip2.DatabaseReader;
 @Service
 @Transactional
 public class UserService implements IUserService {
+
+    private final static Logger LOGGER = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -205,6 +210,16 @@ public class UserService implements IUserService {
     @Override
     public Optional<User> getUserByID(final long id) {
         return userRepository.findById(id);
+    }
+
+    @Override
+    public User getAccount(Long id) {
+        User account = userRepository.findById(id).orElse(null);
+        if (account == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "account not found");
+        }
+        return account;
     }
 
     @Override
@@ -367,14 +382,6 @@ public class UserService implements IUserService {
         return newLocationTokenRepository.save(token);
     }
 
-    public User getAccount(Long id) {
-        User account = userRepository.findById(id).orElse(null);
-        if (account == null) {
-            throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "account not found");
-        }
-        return account;
-    }
 
     @Transactional
     private User createOrUpdateUser(User account) {
@@ -383,6 +390,7 @@ public class UserService implements IUserService {
             account.setPassword(passwordEncoder.encode(""));
             account.setUsing2FA(false);
             account.setRoles(Collections.singletonList(roleRepository.findByName("ROLE_USER")));
+            userRepository.save(account);
             return account;
         }
         existingAccount.setFirstName(account.getFirstName());

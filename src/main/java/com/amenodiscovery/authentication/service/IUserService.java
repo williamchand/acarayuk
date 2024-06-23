@@ -43,6 +43,8 @@ public interface IUserService {
 
     Optional<User> getUserByID(long id);
 
+    public User getAccount(Long id);
+    
     void changeUserPassword(User user, String password);
 
     boolean checkIfValidOldPassword(User user, String password);

@@ -3,7 +3,7 @@ package com.amenodiscovery.authentication.web.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.web.exchanges.HttpExchange.Principal;
+import java.security.Principal;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.MessageSource;
 import org.springframework.core.env.Environment;
@@ -125,8 +125,8 @@ public class RegistrationRestController {
 
     // Change user password
     @PostMapping("/v1/user/password/update")
-    public GenericResponse changeUserPassword(final Locale locale, @Valid PasswordDto passwordDto) {
-        final User user = userService.findUserByEmail(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getEmail());
+    public GenericResponse changeUserPassword(Principal principal, final Locale locale, @Valid PasswordDto passwordDto) {
+        final User user = userService.getAccount(Long.valueOf(principal.getName()));
         if (!userService.checkIfValidOldPassword(user, passwordDto.getOldPassword())) {
             throw new InvalidOldPasswordException();
         }
@@ -183,7 +183,7 @@ public class RegistrationRestController {
 
     @GetMapping("/v1/user/info")
     public ResponseEntity<GeneralDto<AccountDto>> getUserInfo(Principal principal) {
-        final User user = userService.findUserByEmail(((User) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getEmail());
+        final User user = userService.getAccount(Long.valueOf(principal.getName()));
         return ResponseEntity.ok().body(GeneralDto.convertToDto(AccountDto.convertToDto(user)));
     }
 

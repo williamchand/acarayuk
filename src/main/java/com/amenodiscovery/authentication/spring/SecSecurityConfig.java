@@ -40,7 +40,6 @@ import java.io.IOException;
 // @ImportResource({ "classpath:webSecurityConfig.xml" })
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity
 public class SecSecurityConfig {
 
     @Autowired
@@ -49,12 +48,12 @@ public class SecSecurityConfig {
     @Autowired
     private JWTRequestFilter jwtRequestFilter;
 
-    // @Bean
-    // public AuthenticationManager authManager(HttpSecurity http) throws Exception {
-    //     return http.getSharedObject(AuthenticationManagerBuilder.class)
-    //         .authenticationProvider(authProvider())
-    //         .build();
-    // }
+    @Bean
+    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+        return http.getSharedObject(AuthenticationManagerBuilder.class)
+            .authenticationProvider(authProvider())
+            .build();
+    }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -68,24 +67,22 @@ public class SecSecurityConfig {
         Customizer<CorsConfigurer<HttpSecurity>> corsCustomizer = Customizer.withDefaults();
         return http
             .cors(corsCustomizer)
+            .securityContext((securityContext) -> securityContext.requireExplicitSave(true))
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/v1/oauth/login"))
+                .ignoringRequestMatchers("/v1/user/login/google"))
             .sessionManagement(sessionManagement -> sessionManagement
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                // .maximumSessions(0)
-                // .sessionRegistry(sessionRegistry())
+                .maximumSessions(1)
+                .sessionRegistry(sessionRegistry())
             )
-            .authenticationProvider(authProvider())
             .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-                .requestMatchers("/v1/oauth/login").permitAll()
                 .requestMatchers(
                 "/v1/user/registration/captcha",
                 "/v1/user/registration/captchav3", 
                 "/resources/**", 
                 "/qrcode*",
-                "/v1/user/info",
                 "/v1/user/registration",
                 "/v1/user/registration-token/resend",
                 "/v1/user/password/reset",
@@ -93,6 +90,7 @@ public class SecSecurityConfig {
                 "/v1/user/2fa/update",
                 "/v1/user/registration-confirm",
                 "/v1/user/login",
+                "/v1/user/login/google",
                 "/v1/user/enable-new-location"
                 )
                 .permitAll()
