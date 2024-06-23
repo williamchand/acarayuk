@@ -25,6 +25,8 @@ public class AccountDto {
 
     private String email;
 
+    private boolean isEnabled;
+
     private Set<String> roles;
 
     public static final AccountDto convertToDto(User account) {
@@ -35,6 +37,7 @@ public class AccountDto {
                 .firstName(account.getFirstName())
                 .lastName(account.getLastName())
                 .email(account.getEmail())
+                .isEnabled(account.isEnabled())
                 .roles(rolesSet)
                 .build();
     }

@@ -219,6 +219,20 @@ public class UserService implements IUserService {
             throw new ResponseStatusException(
                 HttpStatus.NOT_FOUND, "account not found");
         }
+        if (!account.isEnabled()) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "account not enabled");
+        }
+        return account;
+    }
+
+    @Override
+    public User getUserInfo(Long id) {
+        User account = userRepository.findById(id).orElse(null);
+        if (account == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "account not found");
+        }
         return account;
     }
 

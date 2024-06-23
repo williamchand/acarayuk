@@ -74,7 +74,7 @@ public class RegistrationRestController {
 
     // Registration
     @PostMapping("/v1/user/registration")
-    public GenericResponse registerUserAccount(@Valid final UserDto accountDto, final HttpServletRequest request) {
+    public GenericResponse registerUserAccount(@RequestBody @Valid UserDto accountDto, final HttpServletRequest request) {
         LOGGER.debug("Registering user account with information: {}", accountDto);
 
         final User registered = userService.registerNewUserAccount(accountDto);
@@ -106,7 +106,7 @@ public class RegistrationRestController {
 
     // Save password
     @PostMapping("/v1/user/password/save")
-    public GenericResponse savePassword(final Locale locale, @Valid PasswordDto passwordDto) {
+    public GenericResponse savePassword(final Locale locale, @RequestBody @Valid PasswordDto passwordDto) {
 
         final String result = securityUserService.validatePasswordResetToken(passwordDto.getToken());
 
@@ -125,7 +125,7 @@ public class RegistrationRestController {
 
     // Change user password
     @PostMapping("/v1/user/password/update")
-    public GenericResponse changeUserPassword(Principal principal, final Locale locale, @Valid PasswordDto passwordDto) {
+    public GenericResponse changeUserPassword(Principal principal, final Locale locale, @RequestBody @Valid PasswordDto passwordDto) {
         final User user = userService.getAccount(Long.valueOf(principal.getName()));
         if (!userService.checkIfValidOldPassword(user, passwordDto.getOldPassword())) {
             throw new InvalidOldPasswordException();
@@ -183,7 +183,7 @@ public class RegistrationRestController {
 
     @GetMapping("/v1/user/info")
     public ResponseEntity<GeneralDto<AccountDto>> getUserInfo(Principal principal) {
-        final User user = userService.getAccount(Long.valueOf(principal.getName()));
+        final User user = userService.getUserInfo(Long.valueOf(principal.getName()));
         return ResponseEntity.ok().body(GeneralDto.convertToDto(AccountDto.convertToDto(user)));
     }
 

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.amenodiscovery.authentication.captcha.CaptchaServiceV3;
@@ -44,7 +45,7 @@ public class RegistrationCaptchaController {
 
     // Registration
     @PostMapping("/v1/user/registration/captcha")
-    public GenericResponse captchaRegisterUserAccount(@Valid final UserDto accountDto, final HttpServletRequest request) {
+    public GenericResponse captchaRegisterUserAccount(@RequestBody @Valid final UserDto accountDto, final HttpServletRequest request) {
 
         final String response = request.getParameter("g-recaptcha-response");
         captchaService.processResponse(response);
@@ -55,7 +56,7 @@ public class RegistrationCaptchaController {
     
     // Registration reCaptchaV3
     @PostMapping("/v1/user/registration/captchav3")
-    public GenericResponse captchaV3RegisterUserAccount(@Valid final UserDto accountDto, final HttpServletRequest request) {
+    public GenericResponse captchaV3RegisterUserAccount(@RequestBody @Valid final UserDto accountDto, final HttpServletRequest request) {
 
         final String response = request.getParameter("response");
         captchaServiceV3.processResponse(response, CaptchaServiceV3.REGISTER_ACTION);
