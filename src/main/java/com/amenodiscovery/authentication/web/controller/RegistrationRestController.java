@@ -84,7 +84,7 @@ public class RegistrationRestController {
     }
 
     // User activation - verification
-    @GetMapping("/v1/user/registration-token/resend")
+    @PostMapping("/v1/user/registration-token/resend")
     public GenericResponse resendRegistrationToken(final HttpServletRequest request, @RequestParam("token") final String existingToken) {
         final VerificationToken newToken = userService.generateNewVerificationToken(existingToken);
         final User user = userService.getUser(newToken.getToken());
@@ -144,7 +144,7 @@ public class RegistrationRestController {
         return null;
     }
 
-    @GetMapping("/v1/user/registration/confirm")
+    @PostMapping("/v1/user/registration/confirm")
     public GenericResponse confirmRegistration(final Locale locale, @RequestParam("token") final String token) throws UnsupportedEncodingException {
         final String result = userService.validateVerificationToken(token);
         if (result.equals("valid")) {
@@ -158,8 +158,8 @@ public class RegistrationRestController {
         return new GenericResponse(messages.getMessage("auth.message.invalid", null, locale));
     }
 
-    @GetMapping("/v1/user/login")
-    public ResponseEntity<String> login(@Valid LoginDto loginDto, HttpServletResponse response, HttpServletRequest request) {
+    @PostMapping("/v1/user/login")
+    public ResponseEntity<String> login(@RequestBody @Valid LoginDto loginDto, HttpServletResponse response, HttpServletRequest request) {
         String authToken = userService.login(loginDto.getEmail(), loginDto.getPassword(), request);
         final ResponseCookie cookie = ResponseCookie.from("AUTH-TOKEN", authToken)
                 .httpOnly(true)
@@ -172,7 +172,7 @@ public class RegistrationRestController {
     }
 
 
-    @GetMapping("/v1/user/enable-new-location")
+    @PostMapping("/v1/user/enable-new-location")
     public GenericResponse enableNewLoc(Locale locale, @RequestParam("token") String token) {
         final String loc = userService.isValidNewLocationToken(token);
         if (loc == null) {

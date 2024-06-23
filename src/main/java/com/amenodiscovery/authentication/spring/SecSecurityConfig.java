@@ -40,6 +40,7 @@ import java.io.IOException;
 // @ImportResource({ "classpath:webSecurityConfig.xml" })
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecSecurityConfig {
 
     @Autowired
@@ -48,12 +49,12 @@ public class SecSecurityConfig {
     @Autowired
     private JWTRequestFilter jwtRequestFilter;
 
-    @Bean
-    public AuthenticationManager authManager(HttpSecurity http) throws Exception {
-        return http.getSharedObject(AuthenticationManagerBuilder.class)
-            .authenticationProvider(authProvider())
-            .build();
-    }
+    // @Bean
+    // public AuthenticationManager authManager(HttpSecurity http) throws Exception {
+    //     return http.getSharedObject(AuthenticationManagerBuilder.class)
+    //         .authenticationProvider(authProvider())
+    //         .build();
+    // }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
@@ -68,9 +69,24 @@ public class SecSecurityConfig {
         return http
             .cors(corsCustomizer)
             .securityContext((securityContext) -> securityContext.requireExplicitSave(true))
+            .authenticationProvider(authProvider())
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .ignoringRequestMatchers("/v1/user/login/google"))
+                .ignoringRequestMatchers(
+                    "/v1/user/registration/captcha",
+                    "/v1/user/registration/captchav3", 
+                    "/resources/**", 
+                    "/qrcode*",
+                    "/v1/user/registration",
+                    "/v1/user/registration-token/resend",
+                    "/v1/user/password/reset",
+                    "/v1/user/password/save",
+                    "/v1/user/2fa/update",
+                    "/v1/user/registration-confirm",
+                    "/v1/user/login",
+                    "/v1/user/login/google",
+                    "/v1/user/enable-new-location"
+                ))
             .sessionManagement(sessionManagement -> sessionManagement
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .maximumSessions(1)
