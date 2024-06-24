@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.URLEncoder;
 import java.security.GeneralSecurityException;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -50,8 +51,11 @@ import com.amenodiscovery.authentication.web.dto.IdTokenRequestDto;
 import com.amenodiscovery.authentication.web.dto.UserDto;
 import com.amenodiscovery.authentication.web.error.InvalidOldPasswordException;
 import com.amenodiscovery.authentication.web.error.UserAlreadyExistException;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -101,6 +105,7 @@ public class UserService implements IUserService {
     private Environment env;
 
     private final GoogleIdTokenVerifier verifier;
+    private final GoogleAuthorizationCodeFlow codeflow;
 
     public static final String TOKEN_INVALID = "invalidToken";
     public static final String TOKEN_EXPIRED = "expired";
@@ -110,13 +115,18 @@ public class UserService implements IUserService {
     public static String APP_NAME = "SpringRegistration";
 
 
-    public UserService(@Value("${app.googleClientId}") String clientId) {
+    public UserService(@Value("${app.googleClientId}") String clientId, @Value("${app.googleClientSecret}") String clientSecret) {
         super();
         NetHttpTransport transport = new NetHttpTransport();
         JsonFactory jsonFactory = new GsonFactory();
         verifier = new GoogleIdTokenVerifier.Builder(transport, jsonFactory)
                 .setAudience(Collections.singletonList(clientId))
                 .build();
+        Collection<String> scopes = List.of("openid", "https://www.googleapis.com/auth/userinfo.email","https://www.googleapis.com/auth/userinfo.profile");
+        codeflow = new GoogleAuthorizationCodeFlow(
+            transport, jsonFactory,
+            clientId, clientSecret, scopes
+        );
     }
 
     @Override
@@ -430,7 +440,10 @@ public class UserService implements IUserService {
 
     private User verifyIDToken(String idToken) {
         try {
-            GoogleIdToken idTokenObj = verifier.verify(idToken);
+            LOGGER.info("test william {}", idToken);
+            GoogleTokenResponse response = codeflow.newTokenRequest(idToken).setRedirectUri(env.getProperty("app.frontend.url")).execute();
+            GoogleIdToken idTokenObj = verifier.verify(response.getIdToken());
+            LOGGER.info("test {}", idTokenObj);
             if (idTokenObj == null) {
                 return null;
             }
