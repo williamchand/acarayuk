@@ -255,6 +255,10 @@ public class UserService implements IUserService {
     @Override
     public String login(final String email, final String password, final HttpServletRequest request) {
         final User user = findUserByEmail(email);
+        if (!user.isEnabled()) {
+            throw new ResponseStatusException(
+                HttpStatus.FORBIDDEN, "account not enabled");
+        }
         if (!checkIfValidOldPassword(user, password)) {
             throw new InvalidOldPasswordException();
         }
