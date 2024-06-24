@@ -178,8 +178,17 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public VerificationToken generateNewVerificationToken(final String existingVerificationToken) {
-        VerificationToken vToken = tokenRepository.findByToken(existingVerificationToken);
+    public VerificationToken generateNewVerificationToken(final String userEmail) {
+        User user = findUserByEmail(userEmail);
+        if (user == null) {
+            throw new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "account not found");
+        }
+        if (user.isEnabled()) {
+            throw new ResponseStatusException(
+                HttpStatus.BAD_REQUEST, "account is already enabled");
+        }
+        VerificationToken vToken = tokenRepository.findByUser(user);
         vToken.updateToken(UUID.randomUUID()
             .toString());
         vToken = tokenRepository.save(vToken);
@@ -414,6 +423,7 @@ public class UserService implements IUserService {
         existingAccount.setFirstName(account.getFirstName());
         existingAccount.setLastName(account.getLastName());
         existingAccount.setPictureUrl(account.getPictureUrl());
+        existingAccount.setEnabled(true);
         userRepository.save(existingAccount);
         return existingAccount;
     }
@@ -435,6 +445,7 @@ public class UserService implements IUserService {
             user.setLastName(lastName);
             user.setEmail(email);
             user.setPictureUrl(pictureUrl);
+            user.setEnabled(true);
             return user;
         } catch (GeneralSecurityException | IOException e) {
             return null;

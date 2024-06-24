@@ -55,6 +55,7 @@ public class MovieService {
             driver.navigate().to(url);
             parseDataOnPage(driver, genre);
         }
+        wdm.stopDockerRecording();
         driver.close();
     }
 

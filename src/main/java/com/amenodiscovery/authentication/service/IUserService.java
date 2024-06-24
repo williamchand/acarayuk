@@ -27,7 +27,7 @@ public interface IUserService {
 
     VerificationToken getVerificationToken(String VerificationToken);
 
-    VerificationToken generateNewVerificationToken(String token);
+    VerificationToken generateNewVerificationToken(String userEmail);
 
     void createPasswordResetTokenForUser(User user, String token);
 
