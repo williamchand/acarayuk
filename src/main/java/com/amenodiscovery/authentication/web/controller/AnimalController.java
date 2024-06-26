@@ -29,7 +29,7 @@ public class AnimalController {
 
     @GetMapping("/v1/public/animal/recommend/{name}")
     public ResponseEntity<GeneralDto<AnimalDto>> getRecommendation(Principal principal, @PathVariable("name") String name) {
-        Animal animal = animalService.getAnimalTypeByName(name.trim().toLowerCase());
+        Animal animal = animalService.getAnimalTypeByName(name.trim().replaceAll("\\s{2,}", " ").toLowerCase());
         return ResponseEntity.ok().body(GeneralDto.convertToDto(AnimalDto.convertToDto(animal)));
     }
 }
