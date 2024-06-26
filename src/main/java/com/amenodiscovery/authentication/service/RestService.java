@@ -22,7 +22,7 @@ import org.springframework.http.HttpHeaders;
 
 @Service
 public class RestService {
-    private static Logger logger = LoggerFactory.getLogger(MovieService.class);
+    private static Logger logger = LoggerFactory.getLogger(RestService.class);
 
     private final RestTemplate restTemplate;
 
