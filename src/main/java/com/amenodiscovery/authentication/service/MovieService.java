@@ -45,9 +45,7 @@ public class MovieService {
     public void scrapeImdb() {
         logger.info("Scheduled task executed at: {}", new Date());
         WebDriver driver;
-        WebDriverManager wdm = WebDriverManager.chromedriver().browserInDocker()
-            .dockerDefaultArgs("--disable-gpu,--no-sandbox");
-        driver = wdm.create();
+        driver = WebDriverManager.chromedriver().create();
         List<ScrapeTemplate> scrapeTemplates = scrapeTemplateService.getScrapeTemplates("imdb");
         for (ScrapeTemplate element : scrapeTemplates) {
             String url = element.getUrl();
@@ -55,8 +53,7 @@ public class MovieService {
             driver.navigate().to(url);
             parseDataOnPage(driver, genre);
         }
-        wdm.stopDockerRecording();
-        driver.close();
+        driver.quit();
     }
 
     private void parseDataOnPage(WebDriver driver, String genre) {
