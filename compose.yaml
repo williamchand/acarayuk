@@ -19,4 +19,4 @@ services:
         - "8025:8025"
   chrome:
       image: selenoid/vnc:chrome_125.0
-      container_name: 'mailhog'
+      container_name: 'selenoidchrome'
