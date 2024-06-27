@@ -11,6 +11,3 @@ services:
     image: 'redis:latest'
     ports:
       - '6379:6379'
-  chrome:
-      image: selenoid/vnc:chrome_125.0
-      container_name: 'selenoidchrome'
