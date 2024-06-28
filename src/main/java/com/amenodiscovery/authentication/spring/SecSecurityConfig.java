@@ -2,19 +2,20 @@ package com.amenodiscovery.authentication.spring;
 
 import com.amenodiscovery.authentication.security.google2fa.CustomAuthenticationProvider;
 import com.amenodiscovery.authentication.security.location.DifferentLocationChecker;
+import com.maxmind.db.Reader.FileMode;
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.security.access.expression.SecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -33,9 +34,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 
 // @ImportResource({ "classpath:webSecurityConfig.xml" })
 @Configuration
@@ -48,6 +51,9 @@ public class SecSecurityConfig {
 
     @Autowired
     private JWTRequestFilter jwtRequestFilter;
+
+    @Value("classpath:maxmind/GeoLite2-City.mmdb")
+    Resource resourceFile;
 
     // @Bean
     // public AuthenticationManager authManager(HttpSecurity http) throws Exception {
@@ -145,11 +151,11 @@ public class SecSecurityConfig {
 
     @Bean(name = "GeoIPCountry")
     public DatabaseReader databaseReader() throws IOException, GeoIp2Exception {
-        final File resource = new File(this.getClass()
-            .getClassLoader()
-            .getResource("maxmind/GeoLite2-Country.mmdb")
-            .getFile());
-        return new DatabaseReader.Builder(resource).build();
+        InputStream dbAsStream = resourceFile.getInputStream(); // <-- this is the difference
+        return new DatabaseReader
+            .Builder(dbAsStream)
+            .fileMode(FileMode.MEMORY)
+            .build();
     }
 
     @Bean

@@ -54,6 +54,7 @@ public class MovieService {
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-gpu");
         options.addArguments("--headless");
+        options.addArguments("--disable-dev-shm-usage");
         WebDriver driver = new ChromeDriver(options);
         List<ScrapeTemplate> scrapeTemplates = scrapeTemplateService.getScrapeTemplates("imdb");
         for (ScrapeTemplate element : scrapeTemplates) {

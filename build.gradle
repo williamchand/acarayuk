@@ -47,10 +47,8 @@ dependencies {
 	implementation 'org.passay:passay:1.0'
 	implementation 'com.github.ua-parser:uap-java:1.6.1'
 	implementation 'com.maxmind.geoip2:geoip2:2.15.0'
-	implementation 'org.flywaydb:flyway-core'
-	implementation 'org.flywaydb:flyway-database-postgresql'
 	implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
-	compileOnly 'org.jboss.aerogear:aerogear-otp-java:1.0.0'
+	implementation 'org.jboss.aerogear:aerogear-otp-java:1.0.0'
 	implementation 'com.google.api-client:google-api-client:2.6.0'
 	implementation 'org.seleniumhq.selenium:selenium-java:4.19.1'
 	implementation 'org.seleniumhq.selenium:selenium-chrome-driver:4.19.1'
@@ -88,5 +86,13 @@ tasks.named('test') {
 tasks.named('asciidoctor') {
 	inputs.dir snippetsDir
 	dependsOn test
+}
+
+sourceSets {
+    main {
+        resources {
+            srcDirs = ['src/main/resources']
+        }
+    }
 }
 

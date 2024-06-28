@@ -7,22 +7,34 @@ services:
       - 'POSTGRES_USER=myuser'
     ports:
       - '5432:5432'
+    networks:
+      - data-networks
   redis:
     image: 'redis:latest'
     ports:
       - '6379:6379'
+    networks:
+      - data-networks
   mailhog:
-      image: mailhog/mailhog
-      container_name: 'mailhog'
-      ports:
-        - "1025:1025"
-        - "8025:8025"
+    image: mailhog/mailhog
+    container_name: 'mailhog'
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - data-networks
   spring-app:
-    image: 'docker-spring-boot-movie-app:latest'
     build:
       context: .
+      dockerfile: Dockerfile
     container_name: spring-app
     ports:
       - "8081:8081"
     depends_on:
       - postgres
+    networks:
+      - data-networks
+
+networks:
+  data-networks:
+    name: data-networks

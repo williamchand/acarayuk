@@ -16,9 +16,9 @@ services:
     networks:
       - data-networks
   spring-app:
-    image: 'docker-spring-boot-movie-app:latest'
     build:
       context: .
+      dockerfile: Dockerfile
     container_name: spring-app
     labels:
       - "traefik.enable=true"
