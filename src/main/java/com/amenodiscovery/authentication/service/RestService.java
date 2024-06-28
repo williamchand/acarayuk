@@ -32,14 +32,11 @@ public class RestService {
     @Autowired
     private Environment env;
 
-    private RestTemplate restTemplate;
-
     @Autowired
-    public RestService(RestTemplateBuilder builder) {
-        this.restTemplate = builder.build();
-    }
+    private RestTemplateBuilder restTemplateBuilder;
 
     public ResponseEntity<String> getTrakteerPlainJSON(int page) {
+        RestTemplate restTemplate = restTemplateBuilder.build();
         String uri = "https://api.trakteer.id/v1/public/supports";
         UriComponents builder = UriComponentsBuilder.fromHttpUrl(uri)
                             .queryParam("limit","5")
