@@ -40,7 +40,8 @@ public class RestService {
         headers.set("X-Requested-With", "XMLHttpRequest");
         // build the request
         HttpEntity<String> request = new HttpEntity<>("", headers);
-
-        return restTemplate.exchange(builder.toUriString(), HttpMethod.GET, request, String.class);
+        ResponseEntity<String> resp = restTemplate.exchange(builder.toUriString(), HttpMethod.GET, request, String.class);
+        logger.info("{}", resp);
+        return resp;
     }
 }

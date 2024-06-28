@@ -40,6 +40,6 @@ public class AnimalController {
 
     @GetMapping("/v1/public/trakteer/donation")
     public ResponseEntity<String> getTrakteer(@RequestParam("page") int page) {
-        return restService.getTrakteerPlainJSON(page);
+        return ResponseEntity.ok().body(restService.getTrakteerPlainJSON(page).getBody());
     }
 }
