@@ -1,25 +1,15 @@
 package com.amenodiscovery.authentication.service;
 
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Collection;
-import java.util.Collections;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestOperations;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -49,7 +39,8 @@ public class RestService {
         headers.set("Key", env.getProperty("app.trakteerSecret"));
         headers.set("X-Requested-With", "XMLHttpRequest");
         // build the request
-        HttpEntity<?> request = new HttpEntity<>(headers);
+        HttpEntity<String> request = new HttpEntity<>("", headers);
+
         return restTemplate.exchange(builder.toUriString(), HttpMethod.GET, request, String.class);
     }
 }
