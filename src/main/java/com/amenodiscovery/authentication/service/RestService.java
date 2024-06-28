@@ -32,7 +32,7 @@ public class RestService {
                             .queryParam("page", page).build();
         // create headers
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_XML);
+        headers.setContentType(MediaType.APPLICATION_JSON);
         // set `accept` header
         headers.set("Accept", MediaType.APPLICATION_JSON.toString());
         // set custom header
