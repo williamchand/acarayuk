@@ -17,3 +17,12 @@ services:
       ports:
         - "1025:1025"
         - "8025:8025"
+  spring-app:
+    image: 'docker-spring-boot-movie-app:latest'
+    build:
+      context: .
+    container_name: spring-app
+    ports:
+      - "8081:8081"
+    depends_on:
+      - postgres

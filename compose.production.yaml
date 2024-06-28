@@ -2,12 +2,40 @@ services:
   postgres:
     image: 'postgres:latest'
     environment:
-      - 'POSTGRES_DB=mydatabase'
-      - 'POSTGRES_PASSWORD=secret'
-      - 'POSTGRES_USER=myuser'
+      - 'POSTGRES_DB=amenodatabase'
+      - 'POSTGRES_PASSWORD=Shikamaru123'
+      - 'POSTGRES_USER=amenosignyku'
     ports:
       - '5432:5432'
+    networks:
+      - data-networks
   redis:
     image: 'redis:latest'
     ports:
       - '6379:6379'
+    networks:
+      - data-networks
+  spring-app:
+    image: 'docker-spring-boot-movie-app:latest'
+    build:
+      context: .
+    container_name: spring-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.spring-app.rule=Host(`api.amenosigny.com`)"
+      - "traefik.http.routers.spring-app.entrypoints=websecure"
+      - "traefik.http.routers.spring-app.tls=true"
+      - "traefik.http.routers.spring-app.tls.certresolver=letencrypt"
+      - "traefik.http.services.spring-app.loadbalancer.server.port=8081"
+    networks:
+      - data-networks
+      - proxy
+    depends_on:
+      - postgres
+
+networks:
+  proxy:
+    name: proxy
+    external: true
+  data-networks:
+    name: data-networks

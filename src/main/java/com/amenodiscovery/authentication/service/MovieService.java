@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -25,7 +27,6 @@ import com.amenodiscovery.authentication.persistence.dao.MovieHistoryRepository;
 import com.amenodiscovery.authentication.persistence.dao.MovieRepository;
 import java.util.Optional;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -44,8 +45,16 @@ public class MovieService {
 
     public void scrapeImdb() {
         logger.info("Scheduled task executed at: {}", new Date());
-        WebDriver driver;
-        driver = WebDriverManager.chromedriver().create();
+        final var options = new ChromeOptions();
+        // Set custom options for the webdriver.
+        options.addArguments("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 11_4) AppleWebKit/537.36 (KHTML,like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+        options.addArguments("--lang=en_US");
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--disable-extensions");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--headless");
+        WebDriver driver = new ChromeDriver(options);
         List<ScrapeTemplate> scrapeTemplates = scrapeTemplateService.getScrapeTemplates("imdb");
         for (ScrapeTemplate element : scrapeTemplates) {
             String url = element.getUrl();
