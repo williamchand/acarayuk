@@ -29,21 +29,14 @@ import org.springframework.http.HttpHeaders;
 public class RestService {
     private static Logger logger = LoggerFactory.getLogger(RestService.class);
 
-    @Bean
-    public ClientHttpRequestFactory clientHttpRequestFactory() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(3 * 1000);
-        factory.setReadTimeout(7 * 1000);
-        return factory;
-    }
-
-    private final RestTemplate restTemplate;
-
     @Autowired
     private Environment env;
 
-    public RestService() {
-        restTemplate = new RestTemplate(this.clientHttpRequestFactory());
+    private RestTemplate restTemplate;
+
+    @Autowired
+    public RestService(RestTemplateBuilder builder) {
+        this.restTemplate = builder.build();
     }
 
     public ResponseEntity<String> getTrakteerPlainJSON(int page) {
