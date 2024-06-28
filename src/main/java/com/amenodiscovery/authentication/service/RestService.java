@@ -15,7 +15,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -26,8 +29,13 @@ import org.springframework.http.HttpHeaders;
 public class RestService {
     private static Logger logger = LoggerFactory.getLogger(RestService.class);
 
-    @Autowired
-    private RestTemplateBuilder restBuilder;
+    @Bean
+    public ClientHttpRequestFactory clientHttpRequestFactory() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(3 * 1000);
+        factory.setReadTimeout(7 * 1000);
+        return factory;
+    }
 
     private final RestTemplate restTemplate;
 
@@ -35,7 +43,7 @@ public class RestService {
     private Environment env;
 
     public RestService() {
-        restTemplate = restBuilder.build();
+        restTemplate = new RestTemplate(this.clientHttpRequestFactory());
     }
 
     public ResponseEntity<String> getTrakteerPlainJSON(int page) {
