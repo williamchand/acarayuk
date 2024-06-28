@@ -8,6 +8,8 @@ import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -24,20 +26,23 @@ import org.springframework.http.HttpHeaders;
 public class RestService {
     private static Logger logger = LoggerFactory.getLogger(RestService.class);
 
+    @Autowired
+    private RestTemplateBuilder restBuilder;
+
     private final RestTemplate restTemplate;
 
     @Autowired
     private Environment env;
 
     public RestService() {
-        restTemplate = new RestTemplate();
+        restTemplate = restBuilder.build();
     }
 
     public ResponseEntity<String> getTrakteerPlainJSON(int page) {
         String uri = "https://api.trakteer.id/v1/public/supports";
         UriComponents builder = UriComponentsBuilder.fromHttpUrl(uri)
                             .queryParam("limit","5")
-                            .queryParam("page","1").build();
+                            .queryParam("page", page).build();
         // create headers
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_XML);
