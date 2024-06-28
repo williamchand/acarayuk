@@ -14,8 +14,6 @@ services:
     networks:
       - data-networks
       - proxy
-    depends_on:
-      - postgres
 
 networks:
   proxy:
