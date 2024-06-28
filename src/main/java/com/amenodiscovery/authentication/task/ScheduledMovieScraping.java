@@ -12,7 +12,7 @@ public class ScheduledMovieScraping {
     @Autowired
     private MovieService movieService;
 
-    // @Scheduled(cron = "${app.cron.scrape.expression}")
+    @Scheduled(cron = "${app.cron.scrape.expression}")
     @Scheduled(initialDelay = 1)
     public void execute() {
         movieService.scrapeImdb();
